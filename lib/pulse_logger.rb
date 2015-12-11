@@ -34,6 +34,8 @@ class PulseLogger
   INFO = Syslog::LOG_INFO
   DEBUG = Syslog::LOG_DEBUG
 
+  LABEL = %i( EMERG ALERT CRIT ERROR WARN NOTICE INFO DEBUG )
+
   # Program name that will be included with log messages.
   attr_accessor :progname
 
@@ -87,9 +89,22 @@ class PulseLogger
   #   (typically STDOUT or STDERR), an open file, or any other object that
   #   responds to both #write and #close.
   def initialize(identifier)
-    @severity = INFO
     @progname = identifier || "#{File.basename($0)}"
     @log_device = Syslog.open(identifier, Syslog::LOG_PID, Syslog::LOG_DAEMON)
+    self.severity = INFO
+    Signal.trap('USR1') { toggle_severity }
+  end
+
+  # Change the log level from INFO to DEBUG or vice versa. Used by the signal
+  # handler to enable real-time log level updates for troubleshooting.
+  def toggle_severity
+    if @severity == DEBUG
+      self.severity = INFO
+      log(INFO, 'Changed log level to INFO')
+    else
+      self.severity = DEBUG
+      log(DEBUG, 'Changed log level to DEBUG')
+    end
   end
 
   # Log a message is the configured severity is high enough. Generally it
@@ -100,9 +115,8 @@ class PulseLogger
   # @param [String] message The message to log
   # @return [Boolean]
   def log(sev, message)
-    return true if @log_device.nil? || sev > @severity
-
-    @log_device.log(sev, message)
+    return true if sev > @severity
+    @log_device.log(sev, "#{LABEL[sev].to_s}: #{message}")
     true
   end
 
@@ -118,7 +132,8 @@ class PulseLogger
   #
   # @param [Fixnum] sev see Pulse::PulseLogger::SEVERITIES
   def severity=(sev)
-    @severity = sev || INFO
+    Syslog.mask = Syslog::LOG_UPTO(sev)
+    @severity = sev
   end
 
   # A syntactically neat way to log warnings.
