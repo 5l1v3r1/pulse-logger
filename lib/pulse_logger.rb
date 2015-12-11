@@ -98,13 +98,7 @@ class PulseLogger
   # Change the log level from INFO to DEBUG or vice versa. Used by the signal
   # handler to enable real-time log level updates for troubleshooting.
   def toggle_severity
-    if @severity == DEBUG
-      self.severity = INFO
-      log(INFO, 'Changed log level to INFO')
-    else
-      self.severity = DEBUG
-      log(DEBUG, 'Changed log level to DEBUG')
-    end
+    self.severity = (@severity == INFO) ? DEBUG : INFO
   end
 
   # Log a message is the configured severity is high enough. Generally it
