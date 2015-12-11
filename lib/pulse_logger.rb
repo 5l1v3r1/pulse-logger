@@ -92,7 +92,7 @@ class PulseLogger
     @progname = identifier || "#{File.basename($0)}"
     @log_device = Syslog.open(identifier, Syslog::LOG_PID, Syslog::LOG_DAEMON)
     self.severity = INFO
-    Signal.trap('USR1') { toggle_severity }
+    Signal.trap('USR1', toggle_severity)
   end
 
   # Change the log level from INFO to DEBUG or vice versa. Used by the signal
