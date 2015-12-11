@@ -34,7 +34,7 @@ class PulseLogger
   INFO = Syslog::LOG_INFO
   DEBUG = Syslog::LOG_DEBUG
 
-  LABEL = %i( EMERG ALERT CRIT ERROR WARN NOTICE INFO DEBUG )
+  LABEL = %w( EMERG ALERT CRIT ERROR WARN NOTICE INFO DEBUG )
 
   # Program name that will be included with log messages.
   attr_accessor :progname
@@ -109,14 +109,14 @@ class PulseLogger
 
   # Log a message is the configured severity is high enough. Generally it
   # will be easier for users to make use of the various syntactic methods
-  # (#info, #debug, #warning, etc) over this too log their messages.
+  # (#info, #debug, #warning, etc) over this to log their messages.
   #
   # @param [Symbol] sev Severity of the message
   # @param [String] message The message to log
   # @return [Boolean]
   def log(sev, message)
     return true if sev > @severity
-    @log_device.log(sev, "#{LABEL[sev].to_s}: #{message}")
+    @log_device.log(sev, "#{LABEL[sev]}: #{message}")
     true
   end
 
