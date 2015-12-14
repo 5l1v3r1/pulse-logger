@@ -88,18 +88,39 @@ class PulseLogger
   # @param [String,IO,Object#write] log_device A filename (String), IO object
   #   (typically STDOUT or STDERR), an open file, or any other object that
   #   responds to both #write and #close.
-  def initialize(identifier)
+  # @param [String,Symbol,Fixnum] log_level A log-level setting. Strings and
+  # symbols are supported and case-insensitive. Fixnums should correspond to
+  # the PulseLogger::DEBUG..EMERG constants.
+  def initialize(identifier, log_level=nil)
     @progname = identifier || "#{File.basename($0)}"
-    @log_device = Syslog.open(identifier, Syslog::LOG_PID, Syslog::LOG_DAEMON)
-    self.severity = INFO
-    Signal.trap('USR1') { toggle_severity }
+    self.open_log_device(@progname)
+    self.severity = self.parse_log_level(log_level)
   end
 
-  # Change the log level from INFO to DEBUG or vice versa. Used by the signal
-  # handler to enable real-time log level updates for troubleshooting.
-  def toggle_severity
-    puts 'Toggling log level'
-    self.severity = (@severity == DEBUG) ? INFO : DEBUG
+  # Open the log device
+  #
+  # @param [String] identifier The application identifier for syslog tagging.
+  def open_log_device(identifier)
+    @log_device = Syslog.open(identifier, Syslog::LOG_PID, Syslog::LOG_DAEMON)
+  end
+
+  # Parse log level from a String, Symbol, or Fixnum.
+  #
+  # @param [String,Symbol,Fixnum] log_level A log-level setting. Strings and
+  # symbols are supported and case-insensitive. Fixnums are returned directly.
+  def parse_log_level(log_level)
+    case log_level
+      when NilClass
+        return INFO
+      when Fixnum
+        return log_level
+      when Symbol
+        return LABEL.index(log_level.to_s.upcase) || INFO
+      when String
+        return LABEL.index(log_level.upcase) || INFO
+      else
+        return INFO
+    end
   end
 
   # Log a message is the configured severity is high enough. Generally it
@@ -110,7 +131,6 @@ class PulseLogger
   # @param [String] message The message to log
   # @return [Boolean]
   def log(sev, message)
-    return true if sev > @severity
     @log_device.log(sev, "#{LABEL[sev]}: #{message}")
     true
   end
