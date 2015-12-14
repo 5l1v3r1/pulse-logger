@@ -158,7 +158,6 @@ class PulseLogger
   #
   # @param [Fixnum] sev see Pulse::PulseLogger::SEVERITIES
   def severity=(sev)
-    Syslog.mask = Syslog::LOG_UPTO(sev)
     @severity = sev
   end
 
