@@ -151,6 +151,16 @@ class PulseLogger
     @severity = sev
   end
 
+  # Provided for compatibility with core Logger interface
+  def level
+    self.severity
+  end
+
+  # Provided for compatibility with core Logger interface
+  def level=(log_level)
+    self.severity = self.parse_log_level(log_level)
+  end
+
   # A syntactically neat way to log warnings.
   #
   # @param [String] message
@@ -162,9 +172,26 @@ class PulseLogger
     warning(*args)
   end
 
-  # Returns true if logging at debug severity (required for ActiveRecord)
+  # The following methods return true if logging at or above a
+  # given severity (required for ActiveRecord)
   def debug?
-    @severity == DEBUG
+    @severity >= DEBUG
+  end
+
+  def info?
+    @severity >= INFO
+  end
+
+  def warn?
+    @severity >= WARN
+  end
+
+  def error?
+    @severity >= ERROR
+  end
+
+  def fatal?
+    @severity >= EMERG
   end
 end
 
