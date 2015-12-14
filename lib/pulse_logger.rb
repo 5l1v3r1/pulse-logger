@@ -42,29 +42,29 @@ class PulseLogger
   # A syntactically neat way to log alerts.
   #
   # @param [String] message
-  def alert(message)
-    log(ALERT, message)
+  def alert(message, &blk)
+    log(ALERT, message, &blk)
   end
 
   # A syntactically neat way to log critical messages.
   #
   # @param [String] message
-  def crit(message)
-    log(CRIT, message)
+  def crit(message, &blk)
+    log(CRIT, message, &blk)
   end
 
   # A syntactically neat way to log debug messages.
   #
   # @param [String] message
-  def debug(message)
-    log(DEBUG, message)
+  def debug(message, &blk)
+    log(DEBUG, message, &blk)
   end
 
   # A syntactically neat way to log emergency messages.
   #
   # @param [String] message
-  def emerg(message)
-    log(EMERG, message)
+  def emerg(message, &blk)
+    log(EMERG, message, &blk)
   end
 
   alias_method :fatal, :emerg
@@ -72,15 +72,15 @@ class PulseLogger
   # A syntactically neat way to log errors.
   #
   # @param [String] message
-  def error(message)
-    log(ERROR, message)
+  def error(message, &blk)
+    log(ERROR, message, &blk)
   end
 
   # A syntactically neat way to log informational messages.
   #
   # @param [String] message
-  def info(message)
-    log(INFO, message)
+  def info(message, &blk)
+    log(INFO, message, &blk)
   end
 
   # Create an instance of the log class.
@@ -130,7 +130,18 @@ class PulseLogger
   # @param [Symbol] sev Severity of the message
   # @param [String] message The message to log
   # @return [Boolean]
-  def log(sev, message)
+  def log(sev, message=nil, &blk)
+    sev ||= DEBUG
+    if @log_device.nil? or sev > @severity
+      return true
+    end
+    if message.nil?
+      if block_given?
+        message = yield
+      else
+        return true
+      end
+    end
     @log_device.log(sev, "#{LABEL[sev]}: #{message}")
     true
   end
@@ -138,8 +149,8 @@ class PulseLogger
   # A syntactically neat way to log notices.
   #
   # @param [String] message
-  def notice(message)
-    log(NOTICE, message)
+  def notice(message, &blk)
+    log(NOTICE, message, &blk)
   end
 
   # Set the severity of this logger. Any messages more verbose that what is
@@ -164,13 +175,11 @@ class PulseLogger
   # A syntactically neat way to log warnings.
   #
   # @param [String] message
-  def warning(message)
+  def warning(message, &blk)
     log(WARN, message)
   end
 
-  def warn(*args)
-    warning(*args)
-  end
+  alias_method :warn, :warning
 
   # The following methods return true if logging at or above a
   # given severity (required for ActiveRecord)
