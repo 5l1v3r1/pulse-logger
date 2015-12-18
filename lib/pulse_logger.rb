@@ -29,7 +29,7 @@ class PulseLogger < Logger
   private
 
   def load_config_from_file
-    YAML.load_file(@log_config_filename)
     @last_loaded = Time.now
+    YAML.load_file(@log_config_filename)
   end
 end
