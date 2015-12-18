@@ -2,26 +2,54 @@ require 'rspec'
 require_relative '../lib/pulse_logger'
 
 describe PulseLogger do
-  before(:all) do
-    @logger = PulseLogger.new('test-logger')
+  describe '#load_log_config' do
+    it 'loads a log file if enough time has elapsed' do
+      @logger = PulseLogger.new
+      @logger.last_loaded = Time.now - 120
+      allow(File).to receive(:exist?) {true}
+      expect(@logger).to receive(:load_config_from_file) { {'level' => 'WARN'} }
+      @logger.load_log_config
+    end
+
+    it 'does not load a log file if time has not elapsed' do
+      @logger = PulseLogger.new
+      @logger.last_loaded = Time.now + 120
+      allow(File).to receive(:exist?) {true}
+      expect(@logger).not_to receive(:load_config_from_file)
+      @logger.load_log_config
+    end
+
+    it 'does not load a log file if a file does not exist' do
+      @logger = PulseLogger.new
+      @logger.last_loaded = Time.now - 120
+      allow(File).to receive(:exist?) {false}
+      expect(@logger).not_to receive(:load_config_from_file)
+      @logger.load_log_config
+    end
+
+    it 'sets the log level correctly' do
+      @logger = PulseLogger.new
+      @logger.last_loaded = Time.now - 120
+      allow(File).to receive(:exist?) {true}
+      allow(@logger).to receive(:load_config_from_file) { {'level' => 'WARN'} }
+      @logger.load_log_config
+      expect(@logger.level).to eq(::Logger::WARN)
+    end
   end
-  describe '#parse_log_level' do
-    it 'accepts string arguments' do
-      expect(@logger.parse_log_level('debug')).to equal(PulseLogger::DEBUG)
-      expect(@logger.parse_log_level('Debug')).to equal(PulseLogger::DEBUG)
-      expect(@logger.parse_log_level('DEBUG')).to equal(PulseLogger::DEBUG)
-    end
-    it 'accepts symbolic arguments' do
-      expect(@logger.parse_log_level(:debug)).to equal(PulseLogger::DEBUG)
-      expect(@logger.parse_log_level(:Debug)).to equal(PulseLogger::DEBUG)
-      expect(@logger.parse_log_level(:DEBUG)).to equal(PulseLogger::DEBUG)
-    end
-    it 'passes Fixnum without modification' do
-      expect(@logger.parse_log_level(PulseLogger::DEBUG)).to equal(PulseLogger::DEBUG)
-    end
-    it 'defaults to INFO if nil or invalid' do
-      expect(@logger.parse_log_level(true)).to equal(PulseLogger::INFO)
-      expect(@logger.parse_log_level(nil)).to equal(PulseLogger::INFO)
+
+  describe '#add' do
+    it 'attempts to load a log configuration before printing a message' do
+      @logger = PulseLogger.new
+      @logger.last_loaded = Time.now - 120
+      allow(File).to receive(:exist?) {true}
+      @logger.level = ::Logger::INFO
+      expect(@logger).to receive(:load_config_from_file).twice { {'level' => 'WARN'} }
+
+      executed = false
+      @logger.info {executed = true} # Block should not be executed if log level is warn
+      expect(executed).to be_falsey
+      @logger.warn {executed = true} # Block should be executed if log level is warn
+      expect(executed).to be_truthy
     end
   end
 end
