@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'pulse_logger'
-  s.version     = '0.0.2'
+  s.version     = '1.0.0'
   s.date        = '2015-12-14'
   s.summary     = 'pulse-logger'
   s.description = 'A syslog-logger for Pulse applications'
